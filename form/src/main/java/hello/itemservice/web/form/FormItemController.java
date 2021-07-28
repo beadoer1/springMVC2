@@ -1,18 +1,19 @@
 package hello.itemservice.web.form;
 
+import hello.itemservice.domain.item.DeliveryCode;
 import hello.itemservice.domain.item.Item;
 import hello.itemservice.domain.item.ItemRepository;
+import hello.itemservice.domain.item.ItemType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.logging.Logger;
 
 @Slf4j
 @Controller
@@ -22,13 +23,31 @@ public class FormItemController {
 
     private final ItemRepository itemRepository;
 
-    @ModelAttribute("regions") // 해당 Controller 의 메서드 호출 시 model 에 자동으로 담기게 된다.
+    /**
+     * 해당 Controller 의 메서드 호출 시 model 에 자동으로 담기게 된다.
+     * 여러 메서드에 중복으로 필요한 경우 사용.
+     */
+    @ModelAttribute("regions") //
     public Map<String, String> regions(){
         Map<String, String> regions = new LinkedHashMap<>(); // 순서를 보장해준다.
         regions.put("SEOUL", "서울");
         regions.put("BUSAN", "부산");
         regions.put("JEJU", "제주");
         return regions;
+    }
+
+    @ModelAttribute("itemTypes")
+    public ItemType[] itemTypes() {
+        return ItemType.values(); // Enum 의 모든 정보를 배열로 반환
+    }
+
+    @ModelAttribute("deliveryCodes")
+    public List<DeliveryCode> deliveryCodes() {
+        List<DeliveryCode> deliveryCodes = new ArrayList<>();
+        deliveryCodes.add(new DeliveryCode("FAST", "빠른 배송"));
+        deliveryCodes.add(new DeliveryCode("NORMAL", "일반 배송"));
+        deliveryCodes.add(new DeliveryCode("SLOW", "느린 배송"));
+        return deliveryCodes;
     }
 
     @GetMapping
@@ -48,12 +67,17 @@ public class FormItemController {
     @GetMapping("/add")
     public String addForm(Model model) {
         model.addAttribute("item", new Item());
+
         return "form/addForm";
     }
 
     @PostMapping("/add")
     public String addItem(@ModelAttribute Item item, RedirectAttributes redirectAttributes) {
         log.info("item.open={}", item.getOpen());
+        log.info("item.regions={}", item.getRegions());
+        log.info("item.itemType={}", item.getItemType());
+        log.info("item.deliveryCode={}", item.getDeliveryCode());
+
         Item savedItem = itemRepository.save(item);
         redirectAttributes.addAttribute("itemId", savedItem.getId());
         redirectAttributes.addAttribute("status", true);
